@@ -27,8 +27,7 @@ typedef struct fingerprint_hal {
 } fingerprint_hal_t;
 
 static const fingerprint_hal_t kModules[] = {
-        {"fingerprint", "fpc", false}, {"fingerprint", "goodix", false}, {"fingerprint", "goodix_fod", true},
-        {"fingerprint", "silead", false}, {"fingerprint.silead", "spec", false}, {"fingerprint", "sunwave", false},
+    {"fingerprint.gf95xx", NULL, true}, {"fingerprint", NULL, true},
 };
 
 }  // anonymous namespace
