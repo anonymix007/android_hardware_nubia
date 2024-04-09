@@ -65,7 +65,7 @@ UEventPollingOneShotSensor::UEventPollingOneShotSensor(
         ALOGE("failed to open wait pipe: %d", rc);
     }
 
-    mPollFd = uevent_open_socket(256 * 1024, false);
+    mPollFd = uevent_open_socket(256 * 1024, true);
     //fcntl(mPollFd, F_SETFL, O_NONBLOCK);
 
     if (mPollFd < 0) {
@@ -84,7 +84,7 @@ UEventPollingOneShotSensor::UEventPollingOneShotSensor(
 
     mPolls[1] = {
         .fd = mPollFd,
-        .events = POLLERR | POLLPRI,
+        .events = POLLIN,
     };
 }
 
@@ -143,7 +143,7 @@ void UEventPollingOneShotSensor::run() {
                 continue;
             }
 
-            if (mPolls[1].revents == mPolls[1].events && readUEvent()) {
+            if ((mPolls[1].revents & mPolls[1].events) && readUEvent()) {
                 activate(false, false, false);
                 mCallback->postEvents(readEvents(), isWakeUpSensor());
             } else if (mPolls[0].revents == mPolls[0].events) {
@@ -153,11 +153,11 @@ void UEventPollingOneShotSensor::run() {
     }
 }
 bool UEventPollingOneShotSensor::readUEvent() {
-	char buf[UEVENT_BUFFER_SIZE + 2];
-	int n = uevent_kernel_multicast_recv(mPollFd, buf, UEVENT_BUFFER_SIZE);
+    char buf[UEVENT_BUFFER_SIZE + 2];
+    int n = uevent_kernel_multicast_recv(mPollFd, buf, UEVENT_BUFFER_SIZE);
     if (n <= 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            ALOGE("Error reading from uevent fd");
+            ALOGE("Error reading from uevent fd: %d", errno);
         }
         return false;
     }
@@ -174,15 +174,16 @@ bool UEventPollingOneShotSensor::readUEvent() {
     UEvent event(buf);
 
     if (!event.contains(mInfo.match)) {
-		return false;
-	}
+        return false;
+    }
 
     for (auto& key: mInfo.keys) {
-		if (event.get(key, "false") == "true") {
-			return true;
-		}
-	}
-	return false;
+        if (event.get(key, "false") == "true") {
+            ALOGV("Found: %s", key.c_str());
+            return true;
+        }
+    }
+    return false;
 }
 
 void UEventPollingOneShotSensor::interruptPoll() {
