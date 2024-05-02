@@ -33,5 +33,28 @@ aidl_interface {
         },
     ],
     frozen: true,
+}
+
+aidl_interface {
+    name: "vendor.goodix.hardware.biometrics.fingerprint",
+    vendor_available: true,
+    srcs: ["vendor/goodix/hardware/biometrics/fingerprint/*.aidl"],
+    stability: "vintf",
+    owner: "nubia",
+    backend: {
+        ndk: {
+            enabled: true,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+    frozen: true,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
 
 }
