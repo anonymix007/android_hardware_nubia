@@ -9,9 +9,10 @@
 
 #include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
 
-#include "LockoutTracker.h"
+#include <LockoutTracker.h>
+#include <FingerprintEngine.h>
+
 #include "Session.h"
-#include "UdfpsHandler.h"
 
 using ::aidl::android::hardware::biometrics::fingerprint::ISession;
 using ::aidl::android::hardware::biometrics::fingerprint::ISessionCallback;
@@ -45,8 +46,7 @@ private:
     bool mSupportsGestures;
 
     fingerprint_device_t* mDevice;
-    UdfpsHandlerFactory* mUdfpsHandlerFactory;
-    UdfpsHandler* mUdfpsHandler;
+    std::unique_ptr<FingerprintEngine> mEngine;
 };
 
 } // namespace fingerprint

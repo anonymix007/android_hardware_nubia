@@ -5,18 +5,35 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+soong_config_module_type {
+    name: "nubia_fingerprint",
+    module_type: "cc_defaults",
+    config_namespace: "nubia_fingerprint",
+    value_variables: ["fingerprint_engine"],
+    properties: ["whole_static_libs"],
+}
+
+nubia_fingerprint {
+    name: "nubia_fingerprint_defaults",
+    soong_config_variables: {
+        fingerprint_engine: {
+            whole_static_libs: ["%s"],
+        },
+    },
+}
+
 cc_binary {
     name: "android.hardware.biometrics.fingerprint-service.nubia",
     relative_install_path: "hw",
     init_rc: ["android.hardware.biometrics.fingerprint-service.nubia.rc"],
     vintf_fragments: ["android.hardware.biometrics.fingerprint-service.nubia.xml"],
+    defaults: ["nubia_fingerprint_defaults"],
     srcs: [
         "CancellationSignal.cpp",
         "Fingerprint.cpp",
         "LockoutTracker.cpp",
         "Session.cpp",
         "service.cpp",
-        "UdfpsHandler.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -30,24 +47,13 @@ cc_binary {
         "android.hardware.biometrics.common.util",
     ],
     vendor: true,
-    header_libs: ["nubiafingerprint_headers"],
+    header_libs: ["nubiafingerprintengine_headers"],
 }
 
 cc_library_headers {
-    name: "nubiafingerprint_headers",
+    name: "nubiafingerprintengine_headers",
     export_include_dirs: ["include"],
     vendor: true,
     header_libs: ["libhardware_headers"],
     export_header_lib_headers: ["libhardware_headers"],
-}
-
-cc_library_static {
-    name: "libudfps_extension.nubia",
-    srcs: ["UdfpsExtension.cpp"],
-    include_dirs: [
-        "frameworks/native/services/surfaceflinger/CompositionEngine/include"
-    ],
-    header_libs: [
-        "qti_kernel_headers",
-    ],
 }

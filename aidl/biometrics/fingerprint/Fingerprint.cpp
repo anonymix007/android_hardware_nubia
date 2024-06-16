@@ -8,6 +8,8 @@
 #include <android-base/logging.h>
 #include <cutils/properties.h>
 
+#include <cstdlib>
+
 #include "Fingerprint.h"
 
 namespace {
@@ -49,8 +51,7 @@ static const uint16_t kVersion = HARDWARE_MODULE_API_VERSION(2, 1);
 static Fingerprint* sInstance;
 
 Fingerprint::Fingerprint()
-    : mUdfpsHandlerFactory(nullptr),
-      mUdfpsHandler(nullptr),
+    : mEngine(nullptr),
       mDevice(nullptr),
       mMaxEnrollmentsPerUser(MAX_ENROLLMENTS_PER_USER),
       mSupportsGestures(false),
@@ -70,38 +71,14 @@ Fingerprint::Fingerprint()
 
     if (!mDevice) {
         ALOGE("Can't open any HAL module");
+        abort();
     }
 
-    if (mSensorType == FingerprintSensorType::UNDER_DISPLAY_OPTICAL
-        || mSensorType == FingerprintSensorType::UNDER_DISPLAY_ULTRASONIC) {
-        mUdfpsHandlerFactory = getUdfpsHandlerFactory();
-        if (!mUdfpsHandlerFactory) {
-            ALOGE("Can't get UdfpsHandlerFactory");
-        } else {
-            mUdfpsHandler = mUdfpsHandlerFactory->create();
-            if (!mUdfpsHandler) {
-                ALOGE("Can't create UdfpsHandler");
-            } else {
-                mUdfpsHandler->init(mDevice);
-            }
-        }
-    }
+    mEngine = std::make_unique<FingerprintEngine>(mDevice);
 }
 
 Fingerprint::~Fingerprint() {
     ALOGV("~Fingerprint()");
-    if (mUdfpsHandler) {
-        mUdfpsHandlerFactory->destroy(mUdfpsHandler);
-    }
-    if (mDevice == nullptr) {
-        ALOGE("No valid device");
-        return;
-    }
-    int err;
-    if (0 != (err = mDevice->common.close(reinterpret_cast<hw_device_t*>(mDevice)))) {
-        ALOGE("Can't close fingerprint module, error: %d", err);
-        return;
-    }
     mDevice = nullptr;
 }
 
@@ -197,7 +174,7 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t user
                                               std::shared_ptr<ISession>* out) {
     CHECK(mSession == nullptr || mSession->isClosed()) << "Open session already exists!";
 
-    mSession = SharedRefBase::make<Session>(mDevice, mUdfpsHandler, userId, cb, mLockoutTracker);
+    mSession = SharedRefBase::make<Session>(mEngine.get(), userId, cb, mLockoutTracker);
     *out = mSession;
 
     mSession->linkToDeath(cb->asBinder().get());
