@@ -92,20 +92,20 @@ ndk::ScopedAStatus Session::resetLockout(const HardwareAuthToken& /*hat*/) {
 }
 
 ndk::ScopedAStatus Session::onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor, float major) {
-    mEngine->onPointerDownImpl(pointerId, x, y, minor, major);
+    mEngine->onPointerDownImpl(mCb.get(), pointerId, x, y, minor, major);
     checkSensorLockout();
 
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onPointerUp(int32_t pointerId) {
-    mEngine->onPointerUpImpl(pointerId);
+    mEngine->onPointerUpImpl(mCb.get(), pointerId);
 
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
-    mEngine->onUiReadyImpl();
+    mEngine->onUiReadyImpl(mCb.get());
     return ndk::ScopedAStatus::ok();
 }
 

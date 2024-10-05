@@ -54,7 +54,7 @@ Fingerprint::Fingerprint()
     : mEngine(nullptr),
       mDevice(nullptr),
       mMaxEnrollmentsPerUser(MAX_ENROLLMENTS_PER_USER),
-      mSupportsGestures(false),
+      mSupportsGestures(SUPPORTS_NAVIGATION_GESTURES),
       mSensorType(FingerprintSensorType::UNKNOWN) {
     sInstance = this;  // keep track of the most recent instance
     for (auto& [id_name, class_name, sensor_type] : kModules) {

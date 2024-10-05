@@ -39,9 +39,9 @@ class FingerprintEngine {
     void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds);
     void getAuthenticatorIdImpl(ISessionCallback* cb);
     void invalidateAuthenticatorIdImpl(ISessionCallback* cb);
-    void onPointerDownImpl(int32_t pointerId, int32_t x, int32_t y, float minor, float major);
-    void onPointerUpImpl(int32_t pointerId);
-    void onUiReadyImpl();
+    void onPointerDownImpl(ISessionCallback* cb, int32_t pointerId, int32_t x, int32_t y, float minor, float major);
+    void onPointerUpImpl(ISessionCallback* cb, int32_t pointerId);
+    void onUiReadyImpl(ISessionCallback* cb);
 
     ndk::ScopedAStatus cancelImpl(ISessionCallback* cb);
 
