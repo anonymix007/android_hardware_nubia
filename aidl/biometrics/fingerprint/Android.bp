@@ -5,6 +5,17 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+cc_library_static {
+    name: "libudfps_extension.nubia",
+    srcs: ["UdfpsExtension.cpp"],
+    include_dirs: [
+        "frameworks/native/services/surfaceflinger/CompositionEngine/include"
+    ],
+    header_libs: [
+        "qti_kernel_headers",
+    ],
+}
+
 soong_config_module_type {
     name: "nubia_fingerprint",
     module_type: "cc_defaults",
