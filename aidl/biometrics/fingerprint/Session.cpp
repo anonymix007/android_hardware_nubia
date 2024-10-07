@@ -16,6 +16,7 @@ namespace android {
 namespace hardware {
 namespace biometrics {
 namespace fingerprint {
+
 FingerprintEngine::~FingerprintEngine() {}
 
 void onClientDeath(void* cookie) {
@@ -31,7 +32,6 @@ Session::Session(std::shared_ptr<FingerprintEngine> engine, int userId,
             : mEngine(engine), mUserId(userId), mCb(cb),
               mLockoutTracker(lockoutTracker) {
     mDeathRecipient = AIBinder_DeathRecipient_new(onClientDeath);
-    mEngine->setActiveGroup(mUserId);
 }
 
 ndk::ScopedAStatus Session::generateChallenge() {

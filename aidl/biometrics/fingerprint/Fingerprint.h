@@ -37,7 +37,6 @@ public:
 private:
     std::shared_ptr<Session> mSession;
     LockoutTracker mLockoutTracker;
-    FingerprintSensorType mSensorType;
     int mMaxEnrollmentsPerUser;
     bool mSupportsGestures;
 

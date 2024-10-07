@@ -35,8 +35,7 @@ constexpr char SW_VERSION[] = "vendor/version/revision";
 Fingerprint::Fingerprint()
     : mEngine(makeFingerprintEngine()),
       mMaxEnrollmentsPerUser(MAX_ENROLLMENTS_PER_USER),
-      mSupportsGestures(SUPPORTS_NAVIGATION_GESTURES),
-      mSensorType(FingerprintSensorType::UNKNOWN) {}
+      mSupportsGestures(SUPPORTS_NAVIGATION_GESTURES) {}
 
 Fingerprint::~Fingerprint() {
     ALOGV("~Fingerprint()");
@@ -56,11 +55,12 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
     sensorLocation.sensorLocationY = mEngine->getCenterPositionY();
     sensorLocation.sensorRadius = mEngine->getCenterPositionR();
 
+    FingerprintSensorType sensorType = mEngine->getSensorType();
 
-    ALOGI("Sensor type: %s, location: %s", ::android::internal::ToString(mSensorType).c_str(), sensorLocation.toString().c_str());
+    ALOGI("Sensor type: %s, location: %s", ::android::internal::ToString(sensorType).c_str(), sensorLocation.toString().c_str());
 
     *out = {{commonProps,
-             mSensorType,
+             sensorType,
              {sensorLocation},
              mSupportsGestures,
              false,
@@ -78,6 +78,7 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t user
 
     mSession = SharedRefBase::make<Session>(mEngine, userId, cb, mLockoutTracker);
     mEngine->setSession(mSession);
+    mEngine->setActiveGroup(userId);
     *out = mSession;
 
     mSession->linkToDeath(cb->asBinder().get());
