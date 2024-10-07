@@ -11,8 +11,7 @@
 
 #include <LockoutTracker.h>
 #include <FingerprintEngine.h>
-
-#include "Session.h"
+#include <Session.h>
 
 using ::aidl::android::hardware::biometrics::fingerprint::ISession;
 using ::aidl::android::hardware::biometrics::fingerprint::ISessionCallback;
@@ -36,17 +35,13 @@ public:
                                      std::shared_ptr<ISession>* out) override;
 
 private:
-    static fingerprint_device_t* openHal(const char* id_name, const char* class_name);
-    static void notify(const fingerprint_msg_t* msg);
-
     std::shared_ptr<Session> mSession;
     LockoutTracker mLockoutTracker;
     FingerprintSensorType mSensorType;
     int mMaxEnrollmentsPerUser;
     bool mSupportsGestures;
 
-    fingerprint_device_t* mDevice;
-    std::unique_ptr<FingerprintEngine> mEngine;
+    std::shared_ptr<FingerprintEngine> mEngine;
 };
 
 } // namespace fingerprint

@@ -6,56 +6,70 @@
 
 #pragma once
 
-#include <aidl/android/hardware/biometrics/common/SensorStrength.h>
+#include <memory>
+
+#include <aidl/android/hardware/biometrics/fingerprint/FingerprintSensorType.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
-#include <aidl/android/hardware/biometrics/fingerprint/SensorLocation.h>
 
-#include <hardware/fingerprint.h>
-#include <hardware/hardware.h>
+#include <LockoutTracker.h>
 
-#include "LockoutTracker.h"
-
+using ::aidl::android::hardware::biometrics::fingerprint::FingerprintSensorType;
 using namespace ::aidl::android::hardware::biometrics::common;
 
-struct fingerprint_device_gf95xx;
+#define WEAK_SESSION_CALL_METHOD_OR_LOG_ERROR(session, method, ...) \
+    do {                                                                                 \
+        if (auto sps = (session).lock()) {                                               \
+            sps->(method)(__VA_ARGS__);                                                  \
+        } else {                                                                         \
+            ALOGE("%s: %s does not exist, cannot call %s", __func__, #session, #method); \
+        }                                                                                \
+    } while(0)
+
+#define WEAK_SESSION_CALLBACK_OR_LOG_ERROR(session, method, ...) \
+    do {                                                                                            \
+        if (auto sps = (session).lock()) {                                                          \
+            sps->mCb->method(__VA_ARGS__);                                                          \
+        } else {                                                                                    \
+            ALOGE("%s: %s does not exist, cannot invoke callback %s", __func__, #session, #method); \
+        }                                                                                           \
+    } while(0)
+
 
 namespace aidl::android::hardware::biometrics::fingerprint {
+
+class Session;
 
 // Device-specific fingerprint engine
 
 class FingerprintEngine {
   public:
-    FingerprintEngine(fingerprint_device_t* device);
-    ~FingerprintEngine();
+    virtual ~FingerprintEngine();
 
-    void setActiveGroup(int userId);
+    virtual void setSession(std::shared_ptr<Session> session) = 0;
+    virtual void setActiveGroup(int userId) = 0;
 
-    void generateChallengeImpl(ISessionCallback* cb);
-    void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge);
-    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat);
-    void authenticateImpl(ISessionCallback* cb, int64_t operationId);
-    void detectInteractionImpl(ISessionCallback* cb);
-    void enumerateEnrollmentsImpl(ISessionCallback* cb);
-    void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds);
-    void getAuthenticatorIdImpl(ISessionCallback* cb);
-    void invalidateAuthenticatorIdImpl(ISessionCallback* cb);
-    void onPointerDownImpl(ISessionCallback* cb, int32_t pointerId, int32_t x, int32_t y, float minor, float major);
-    void onPointerUpImpl(ISessionCallback* cb, int32_t pointerId);
-    void onUiReadyImpl(ISessionCallback* cb);
+    virtual FingerprintSensorType getSensorType() const = 0;
+    virtual int32_t getCenterPositionR() const = 0;
+    virtual int32_t getCenterPositionX() const = 0;
+    virtual int32_t getCenterPositionY() const = 0;
 
-    ndk::ScopedAStatus cancelImpl(ISessionCallback* cb);
+    virtual void generateChallengeImpl() = 0;
+    virtual void revokeChallengeImpl(int64_t challenge) = 0;
+    virtual void enrollImpl(const keymaster::HardwareAuthToken& hat) = 0;
+    virtual void authenticateImpl(int64_t operationId) = 0;
+    virtual void detectInteractionImpl() = 0;
+    virtual void enumerateEnrollmentsImpl() = 0;
+    virtual void removeEnrollmentsImpl(const std::vector<int32_t>& enrollmentIds) = 0;
+    virtual void getAuthenticatorIdImpl() = 0;
+    virtual void invalidateAuthenticatorIdImpl() = 0;
+    virtual void onPointerDownImpl(int32_t pointerId, int32_t x, int32_t y, float minor, float major) = 0;
+    virtual void onPointerUpImpl(int32_t pointerId) = 0;
+    virtual void onUiReadyImpl() = 0;
+    virtual ndk::ScopedAStatus cancelImpl() = 0;
 
-    bool notifyImpl(ISessionCallback* cb, const fingerprint_msg_t* msg, LockoutTracker& lockoutTracker);
-
-private:
-    fingerprint_device_gf95xx* mDevice;
-    int32_t mUserId;
-
-    uint64_t mAuthId;
-    uint64_t mChallengeId;
-
-    Error VendorErrorFilter(int32_t error, int32_t* vendorCode);
-    AcquiredInfo VendorAcquiredFilter(int32_t info, int32_t* vendorCode);
+protected:
+    std::weak_ptr<Session> mSession;
 };
 
+extern std::shared_ptr<FingerprintEngine> makeFingerprintEngine();
 }

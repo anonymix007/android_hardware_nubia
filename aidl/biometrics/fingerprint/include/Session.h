@@ -6,13 +6,13 @@
  */
 
 #pragma once
+
+#ifndef LOG_TAG
 #define LOG_TAG "android.hardware.biometrics.fingerprint-service.nubia"
+#endif
 
 #include <aidl/android/hardware/biometrics/fingerprint/BnSession.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
-#include <android/log.h>
-#include <hardware/fingerprint.h>
-#include <hardware/hardware.h>
 #include <log/log.h>
 
 #include <LockoutTracker.h>
@@ -33,7 +33,7 @@ void onClientDeath(void* cookie);
 
 class Session : public BnSession {
 public:
-    Session(FingerprintEngine* engine, int userId,
+    Session(std::shared_ptr<FingerprintEngine> engine, int userId,
             std::shared_ptr<ISessionCallback> cb, LockoutTracker lockoutTracker);
     ndk::ScopedAStatus generateChallenge() override;
     ndk::ScopedAStatus revokeChallenge(int64_t challenge) override;
@@ -71,17 +71,16 @@ public:
     ndk::ScopedAStatus cancel();
     binder_status_t linkToDeath(AIBinder* binder);
     bool isClosed();
-    void notify(const fingerprint_msg_t* msg);
 
-private:
+    // Callback for talking to the framework. This callback must only be called from non-binder
+    // threads to prevent nested binder calls and consequently a binder thread exhaustion.
+    // Practically, it means that this callback should always be called from the worker thread.
+    std::shared_ptr<ISessionCallback> mCb;
+    bool checkSensorLockout();
     LockoutTracker mLockoutTracker;
+private:
     bool mClosed = false;
 
-    //static ndk::ScopedAStatus ErrorFilter(int32_t error);
-    static Error VendorErrorFilter(int32_t error, int32_t* vendorCode);
-    static AcquiredInfo VendorAcquiredFilter(int32_t info, int32_t* vendorCode);
-
-    bool checkSensorLockout();
     void clearLockout(bool clearAttemptCounter);
     void startLockoutTimer(int64_t timeout);
     void lockoutTimerExpired();
@@ -93,15 +92,10 @@ private:
     // The user ID for which this session was created.
     int32_t mUserId;
 
-    // Callback for talking to the framework. This callback must only be called from non-binder
-    // threads to prevent nested binder calls and consequently a binder thread exhaustion.
-    // Practically, it means that this callback should always be called from the worker thread.
-    std::shared_ptr<ISessionCallback> mCb;
-
     // Binder death handler.
     AIBinder_DeathRecipient* mDeathRecipient;
 
-    FingerprintEngine* mEngine;
+    std::shared_ptr<FingerprintEngine> mEngine;
 };
 
 } // namespace fingerprint

@@ -14,7 +14,7 @@ soong_config_module_type {
 }
 
 nubia_fingerprint {
-    name: "nubia_fingerprint_defaults",
+    name: "nubia_fingerprintengine_defaults",
     soong_config_variables: {
         fingerprint_engine: {
             whole_static_libs: ["%s"],
@@ -22,12 +22,38 @@ nubia_fingerprint {
     },
 }
 
+cc_library_headers {
+    name: "nubia_fingerprintengine_headers",
+    export_include_dirs: ["include"],
+    vendor: true,
+    header_libs: ["libhardware_headers"],
+    export_header_lib_headers: ["libhardware_headers"],
+}
+
+cc_defaults {
+    name: "nubia_fingerprint_defaults",
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "android.hardware.biometrics.fingerprint-V3-ndk",
+        "android.hardware.biometrics.common-V3-ndk",
+        "android.hardware.biometrics.common.util",
+    ],
+    header_libs: ["nubia_fingerprintengine_headers"],
+}
+
 cc_binary {
     name: "android.hardware.biometrics.fingerprint-service.nubia",
+    vendor: true,
     relative_install_path: "hw",
     init_rc: ["android.hardware.biometrics.fingerprint-service.nubia.rc"],
     vintf_fragments: ["android.hardware.biometrics.fingerprint-service.nubia.xml"],
-    defaults: ["nubia_fingerprint_defaults"],
+    defaults: [
+        "nubia_fingerprintengine_defaults",
+        "nubia_fingerprint_defaults",
+    ],
     srcs: [
         "CancellationSignal.cpp",
         "Fingerprint.cpp",
@@ -35,25 +61,5 @@ cc_binary {
         "Session.cpp",
         "service.cpp",
     ],
-    shared_libs: [
-        "libbase",
-        "libbinder_ndk",
-        "libcutils",
-        "libhardware",
-        "libdl",
-        "liblog",
-        "android.hardware.biometrics.fingerprint-V3-ndk",
-        "android.hardware.biometrics.common-V3-ndk",
-        "android.hardware.biometrics.common.util",
-    ],
-    vendor: true,
-    header_libs: ["nubiafingerprintengine_headers"],
 }
 
-cc_library_headers {
-    name: "nubiafingerprintengine_headers",
-    export_include_dirs: ["include"],
-    vendor: true,
-    header_libs: ["libhardware_headers"],
-    export_header_lib_headers: ["libhardware_headers"],
-}

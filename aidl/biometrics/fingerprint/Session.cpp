@@ -7,7 +7,7 @@
 
 #include <thread>
 
-#include "Session.h"
+#include <Session.h>
 
 #include "CancellationSignal.h"
 
@@ -16,6 +16,8 @@ namespace android {
 namespace hardware {
 namespace biometrics {
 namespace fingerprint {
+FingerprintEngine::~FingerprintEngine() {}
+
 void onClientDeath(void* cookie) {
     ALOGI("FingerprintService has died");
     Session* session = static_cast<Session*>(cookie);
@@ -24,7 +26,7 @@ void onClientDeath(void* cookie) {
     }
 }
 
-Session::Session(FingerprintEngine* engine, int userId,
+Session::Session(std::shared_ptr<FingerprintEngine> engine, int userId,
             std::shared_ptr<ISessionCallback> cb, LockoutTracker lockoutTracker)
             : mEngine(engine), mUserId(userId), mCb(cb),
               mLockoutTracker(lockoutTracker) {
@@ -33,52 +35,52 @@ Session::Session(FingerprintEngine* engine, int userId,
 }
 
 ndk::ScopedAStatus Session::generateChallenge() {
-    mEngine->generateChallengeImpl(mCb.get());
+    mEngine->generateChallengeImpl();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
-    mEngine->revokeChallengeImpl(mCb.get(), challenge);
+    mEngine->revokeChallengeImpl(challenge);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enroll(const HardwareAuthToken& hat,
                                    std::shared_ptr<ICancellationSignal>* out) {
-    mEngine->enrollImpl(mCb.get(), hat);
+    mEngine->enrollImpl(hat);
     *out = SharedRefBase::make<CancellationSignal>(this);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::authenticate(int64_t operationId,
                                          std::shared_ptr<ICancellationSignal>* out) {
-    mEngine->authenticateImpl(mCb.get(), operationId);
+    mEngine->authenticateImpl(operationId);
     *out = SharedRefBase::make<CancellationSignal>(this);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<ICancellationSignal>* out) {
-    mEngine->detectInteractionImpl(mCb.get());
+    mEngine->detectInteractionImpl();
     *out = SharedRefBase::make<CancellationSignal>(this);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments() {
-    mEngine->enumerateEnrollmentsImpl(mCb.get());
+    mEngine->enumerateEnrollmentsImpl();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& enrollmentIds) {
-    mEngine->removeEnrollmentsImpl(mCb.get(), enrollmentIds);
+    mEngine->removeEnrollmentsImpl(enrollmentIds);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId() {
-    mEngine->getAuthenticatorIdImpl(mCb.get());
+    mEngine->getAuthenticatorIdImpl();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::invalidateAuthenticatorId() {
-    mEngine->invalidateAuthenticatorIdImpl(mCb.get());
+    mEngine->invalidateAuthenticatorIdImpl();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -92,20 +94,20 @@ ndk::ScopedAStatus Session::resetLockout(const HardwareAuthToken& /*hat*/) {
 }
 
 ndk::ScopedAStatus Session::onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor, float major) {
-    mEngine->onPointerDownImpl(mCb.get(), pointerId, x, y, minor, major);
+    mEngine->onPointerDownImpl(pointerId, x, y, minor, major);
     checkSensorLockout();
 
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onPointerUp(int32_t pointerId) {
-    mEngine->onPointerUpImpl(mCb.get(), pointerId);
+    mEngine->onPointerUpImpl(pointerId);
 
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
-    mEngine->onUiReadyImpl(mCb.get());
+    mEngine->onUiReadyImpl();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -148,7 +150,7 @@ ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool /*shouldIgnore*/) {
 }
 
 ndk::ScopedAStatus Session::cancel() {
-    return mEngine->cancelImpl(mCb.get());
+    return mEngine->cancelImpl();
 }
 
 ndk::ScopedAStatus Session::close() {
@@ -207,12 +209,6 @@ void Session::lockoutTimerExpired() {
 
     mIsLockoutTimerStarted = false;
     mIsLockoutTimerAborted = false;
-}
-
-void Session::notify(const fingerprint_msg_t* msg) {
-    if (mEngine->notifyImpl(mCb.get(), msg, mLockoutTracker)) {
-        checkSensorLockout();
-    }
 }
 
 } // namespace fingerprint
