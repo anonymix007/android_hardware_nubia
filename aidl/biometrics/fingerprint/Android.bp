@@ -21,14 +21,14 @@ soong_config_module_type {
     module_type: "cc_defaults",
     config_namespace: "nubia_fingerprint",
     value_variables: ["fingerprint_engine"],
-    properties: ["whole_static_libs"],
+    properties: ["defaults"],
 }
 
 nubia_fingerprint {
     name: "nubia_fingerprintengine_defaults",
     soong_config_variables: {
         fingerprint_engine: {
-            whole_static_libs: ["%s"],
+            defaults: ["%s"],
         },
     },
 }
@@ -38,6 +38,7 @@ cc_library_headers {
     export_include_dirs: ["include"],
     vendor: true,
     header_libs: ["libhardware_headers"],
+    export_header_lib_headers: ["libhardware_headers"],
 }
 
 cc_defaults {
@@ -46,7 +47,6 @@ cc_defaults {
         "libbase",
         "libbinder_ndk",
         "libcutils",
-        "libhardware",
         "liblog",
         "android.hardware.biometrics.fingerprint-V3-ndk",
         "android.hardware.biometrics.common-V3-ndk",
@@ -61,14 +61,6 @@ cc_library_static {
     srcs: ["HwFingerprintEngine.cpp"],
     defaults: [
         "nubia_fingerprint_defaults",
-    ],
-}
-
-cc_defaults {
-    name: "nubia_hwfingerprint_defaults",
-    defaults: ["nubia_fingerprint_defaults"],
-    whole_static_libs: [
-        "libhwfingerprintengine",
     ],
 }
 
