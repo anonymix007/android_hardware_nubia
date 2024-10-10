@@ -27,9 +27,9 @@ void onClientDeath(void* cookie) {
     }
 }
 
-Session::Session(std::shared_ptr<FingerprintEngine> engine, int userId,
+Session::Session(std::shared_ptr<FingerprintEngine> engine,
             std::shared_ptr<ISessionCallback> cb, LockoutTracker lockoutTracker)
-            : mEngine(engine), mUserId(userId), mCb(cb),
+            : mEngine(engine), mCb(cb),
               mLockoutTracker(lockoutTracker) {
     mDeathRecipient = AIBinder_DeathRecipient_new(onClientDeath);
 }

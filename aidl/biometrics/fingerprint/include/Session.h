@@ -33,7 +33,7 @@ void onClientDeath(void* cookie);
 
 class Session : public BnSession {
 public:
-    Session(std::shared_ptr<FingerprintEngine> engine, int userId,
+    Session(std::shared_ptr<FingerprintEngine> engine,
             std::shared_ptr<ISessionCallback> cb, LockoutTracker lockoutTracker);
     ndk::ScopedAStatus generateChallenge() override;
     ndk::ScopedAStatus revokeChallenge(int64_t challenge) override;
@@ -88,9 +88,6 @@ private:
     // lockout timer
     bool mIsLockoutTimerStarted = false;
     bool mIsLockoutTimerAborted = false;
-
-    // The user ID for which this session was created.
-    int32_t mUserId;
 
     // Binder death handler.
     AIBinder_DeathRecipient* mDeathRecipient;
