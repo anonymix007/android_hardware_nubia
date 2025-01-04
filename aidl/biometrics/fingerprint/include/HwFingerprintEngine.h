@@ -48,6 +48,7 @@ class HwFingerprintEngine : public FingerprintEngine {
     virtual void onPointerDownImpl(int32_t pointerId, int32_t x, int32_t y, float minor, float major) = 0;
     virtual void onPointerUpImpl(int32_t pointerId) = 0;
     virtual void onUiReadyImpl() = 0;
+    virtual void onAcquired() = 0;
     virtual ndk::ScopedAStatus cancelImpl();
 
 protected:

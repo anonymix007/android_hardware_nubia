@@ -284,6 +284,7 @@ void HwFingerprintEngine::notify(const fingerprint_msg_t* msg) {
                 if (result != AcquiredInfo::VENDOR) {
                     ALOGD("onAcquired(%d, %d)", result, vendorCode);
                     cb->onAcquired(result, vendorCode);
+                    thisPtr->onAcquired();
                 } else {
                     ALOGW("onAcquired(AcquiredInfo::VENDOR, %d)", vendorCode);
                     // Do not send onAcquired or illumination will be turned off prematurely
