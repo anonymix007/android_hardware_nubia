@@ -15,7 +15,7 @@ uint32_t getUdfpsDimZOrder(uint32_t z) {
 }
 
 uint32_t getUdfpsZOrder(uint32_t z, bool touched) {
-    return touched ? (z | ZTE_UDFPS_FOD_MASK) : z;
+    return touched ? (z | ZTE_UDFPS_HBM_MASK) : z;
 }
 
 uint64_t getUdfpsUsageBits(uint64_t usageBits, bool /* touched */) {
